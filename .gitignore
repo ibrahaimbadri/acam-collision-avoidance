@@ -1,0 +1,12 @@
+# Allow-list: everything is ignored unless admitted below.
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/modules/
+!/*.m
+
+# Never, wherever they are:
+*.mat
+*.p12
+*.pem

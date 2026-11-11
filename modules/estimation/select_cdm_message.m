@@ -1,0 +1,36 @@
+function [message, history, index] = select_cdm_message(sequence, ...
+                                                        decision_lead_s)
+%SELECT_CDM_MESSAGE Return the latest CDM available at a decision cutoff.
+
+    sequence = parse_cdm_sequence(sequence);
+    if nargin < 2 || isempty(decision_lead_s)
+        index = numel(sequence.messages);
+    else
+        validateattributes(decision_lead_s, {'numeric'}, ...
+            {'real', 'finite', 'scalar', 'nonnegative'}, ...
+            mfilename, 'decision_lead_s');
+        available = find([sequence.messages.time_to_tca_s] >= ...
+                         decision_lead_s);
+        if isempty(available)
+            error('ACAM:NoCdmAtDecisionLead', ...
+                  'No CDM was available at least %.3g h before TCA.', ...
+                  decision_lead_s / 3600);
+        end
+        index = available(end);
+    end
+    message = sequence.messages(index);
+    available_messages = sequence.messages(1:index);
+    probabilities = [available_messages.collision_probability];
+    probabilities = probabilities(isfinite(probabilities));
+    if isempty(probabilities)
+        maximum_probability = NaN;
+    else
+        maximum_probability = max(probabilities);
+    end
+    history = struct( ...
+        'message_count', index, ...
+        'maximum_reported_probability', maximum_probability, ...
+        'earliest_time_to_tca_s', ...
+            available_messages(1).time_to_tca_s, ...
+        'latest_time_to_tca_s', message.time_to_tca_s);
+end
